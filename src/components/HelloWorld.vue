@@ -10,12 +10,13 @@
       <input type="text" name="toname" id="toname">
       <br>消息内容:
       <input type="text" name="msg" id="msg">
-      <br>
+      <br><br>
+      <button type="button" @click="loginWeb()">登陆</button>
+      <button type="button" @click="logout()">退出</button>
     </div>
     <br>
     <div>
       <h3>单聊</h3>
-      <button type="button" @click="loginWeb()">登陆IM账号</button>
       <button type="button" @click="sendTextMsg()">发送文本</button>
       <br>image:
       <input type="file" id="dimg">
@@ -60,112 +61,10 @@
 </template>
 
 <script>
-import { conn, rtcCall, member } from "../router/initWeb";
+import { conn, rtcCall, memberNames } from "../router/initWeb";
 let result;
 let resultCon;
-let memberNames;
-//有人加入会议，其他人调用joinXX等方法，如果加入成功，已经在会议中的人将会收到
-emedia.mgr.onMemberJoined = function(member) {
-  memberNames = member.name;
-  console.log(member.role);
-  console.log(JSON.stringify(member.name) + "加入会议");
-};
-// emedia.mgr.onMemberJoin = function (member) {
-//   memberNames = member.name;
-//   console.log(JSON.stringify(member.name) + "加入会议");
-// };
-//有人退出会议
-emedia.mgr.onMemberExited = function(member) {
-  console.log(JSON.stringify(member.name) + "退出会议");
-};
-//有媒体流添加；比如 自己调用了publish方法（stream.located() === true时），或其他人调用了publish方法。
-emedia.mgr.onStreamAdded = function(member, stream) {
-  console.log("媒体流加入" + JSON.stringify(member));
-  var located = stream.located();
-  if (located) {
-    //stream.located() === true, 是自己发布刚刚发布的流
-    emedia.mgr.streamBindVideo(stream, video);
-  } else {
-    emedia.mgr.streamBindVideo(stream, localVideo);
-    emedia.mgr.subscribe(member, stream, true, true, localVideo);
-  }
-  //用户提供的代码
-  // if (stream.located()) {
-  //   emedia.mgr.streamBindVideo(video, pushedStream);
-  //   console.log('自己流')
-  // } else {
-  //   $("#log").append(
-  //     '<video id="localVideo" style="border: 1px solid red" autoplay></video>'
-  //   );
-  //   emedia.mgr.streamBindVideo(stream, localVideo)
-  //   emedia.mgr.subscribe(member, stream, true, true, localVideo)
-  // }
-};
-//有媒体流移除
-emedia.mgr.onStreamRemoved = function(member, stream) {
-  console.log(JSON.stringify(member.name) + "媒体流退出");
-};
 
-emedia.mgr.setUrlCreator(function(url, apiName) {
-  var restApi = emedia.util.parseURL("rest");
-  if (!restApi) {
-    restApi = "https://a1.easemob.com";
-  }
-  return restApi + url;
-});
-
-//角色改变
-emedia.mgr.onRoleChanged = function(role) {
-  console.log("角色改变成功");
-  //会议退出；自己主动退 或 服务端主动关闭；
-  emedia.mgr.onConferenceExit = function(reason, failed) {
-    reason = reason || 0;
-    switch (reason) {
-      case 0:
-        reason = "正常挂断";
-        break;
-      case 1:
-        reason = "没响应";
-        break;
-      case 2:
-        reason = "服务器拒绝";
-        break;
-      case 3:
-        reason = "对方忙";
-        break;
-      case 4:
-        reason = "失败,可能是网络或服务器拒绝";
-        if (failed === -9527) {
-          reason = "失败,网络原因";
-        }
-        if (failed === -500) {
-          reason = "Ticket失效";
-        }
-        if (failed === -502) {
-          reason = "Ticket过期";
-        }
-        if (failed === -504) {
-          reason = "链接已失效";
-        }
-        if (failed === -508) {
-          reason = "会议无效";
-        }
-        if (failed === -510) {
-          reason = "服务端限制";
-        }
-        break;
-      case 5:
-        reason = "不支持";
-        break;
-      case 10:
-        reason = "其他设备登录";
-        break;
-      case 11:
-        reason = "会议关闭";
-        break;
-    }
-  };
-};
 export default {
   name: "Hello",
   methods: {
@@ -179,6 +78,9 @@ export default {
         appKey: WebIM.config.appkey
       };
       conn.open(options);
+    },
+    logout(){
+      conn.close();
     },
     sendTextMsg() {
       var toname = document.getElementById("toname").value;
