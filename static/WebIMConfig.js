@@ -47,6 +47,7 @@ var config = {
      * Application AppKey
      */
     appkey: "easemob-demo#chatdemoui",
+    // appkey:"juns#warmeeting",
     /*
      * Application Host
      */
@@ -56,7 +57,7 @@ var config = {
      * @parameter {Boolean} true or false
      */
     https: true,
-    isHttpDNS: false,
+    isHttpDNS: true,
     /*
      * isMultiLoginSessions
      * true: A visitor can sign in to multiple webpages and receive messages at all the webpages.

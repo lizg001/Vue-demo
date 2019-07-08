@@ -213,7 +213,7 @@ if (WebIM.WebRTC) {
           "streamType: ",
           streamType
         );
-        var video = document.getElementById("video");
+        var video = document.getElementById("v1");
         video.srcObject = stream;
       },
       onGotLocalStream: function (stream, streamType) {
@@ -224,7 +224,7 @@ if (WebIM.WebRTC) {
           "streamType: ",
           streamType
         );
-        var video = document.getElementById("localVideo");
+        var video = document.getElementById("v2");
         video.srcObject = stream;
       },
       onRinging: function (caller) {
@@ -278,10 +278,10 @@ emedia.mgr.onStreamAdded = function(member, stream) {
   var located = stream.located();
   if (located) {
     //stream.located() === true, 是自己发布刚刚发布的流
-    emedia.mgr.streamBindVideo(stream, video);
+    // emedia.mgr.streamBindVideo(stream, v1);
   } else {
-    emedia.mgr.streamBindVideo(stream, localVideo);
-    emedia.mgr.subscribe(member, stream, true, true, localVideo);
+    // emedia.mgr.streamBindVideo(stream, localVideo);
+    emedia.mgr.subscribe(member, stream, true, true, v2);
   }
   //用户提供的代码
   // if (stream.located()) {

@@ -1,8 +1,7 @@
 <template>
   <div>
     <div>
-      <h3>登陆</h3>
-      登陆账号:
+      <h3>登陆</h3>登陆账号:
       <input type="text" name="name" id="name">
       <br>登陆密码:
       <input type="text" name="pwd" id="pwd">
@@ -10,7 +9,8 @@
       <input type="text" name="toname" id="toname">
       <br>消息内容:
       <input type="text" name="msg" id="msg">
-      <br><br>
+      <br>
+      <br>
       <button type="button" @click="loginWeb()">登陆</button>
       <button type="button" @click="logout()">退出</button>
     </div>
@@ -18,6 +18,7 @@
     <div>
       <h3>单聊</h3>
       <button type="button" @click="sendTextMsg()">发送文本</button>
+      <button type="button" @click="sendCmdMsg()">发送透传</button>
       <br>image:
       <input type="file" id="dimg">
       <button type="button" @click="sendImgMsg()">发送图片</button>
@@ -48,14 +49,17 @@
       <button type="button" @click="inviteUser()">CMD邀请</button>
       <button type="button" @click="inviteUserText()">文本邀请</button>
       <button type="button" @click="removeUser()">移除会议成员</button>
+      <button type="button" @click="desktopWith()">桌面共享</button>
       <button type="button" @click="endConVideo()">退出会议</button>
       <br>
+      <!-- <button type="button" @click="csJoinConfer()">测试加入视频会议</button> -->
     </div>
     <div id="log"></div>
     <div>
       <br>
-      <video id="video" style="border: 1px solid red" autoplay></video>
-      <video id="localVideo" style="border: 1px solid blue" muted="true" autoplay></video>
+      <video id="v1" autoplay></video>
+      <video id="v2" muted="true" autoplay></video>
+      <video id="v3" autoplay></video>
     </div>
   </div>
 </template>
@@ -79,7 +83,7 @@ export default {
       };
       conn.open(options);
     },
-    logout(){
+    logout() {
       conn.close();
     },
     sendTextMsg() {
@@ -101,6 +105,20 @@ export default {
       });
       conn.send(msg.body);
       console.log(msg.body);
+    },
+    sendCmdMsg() {
+      var id = conn.getUniqueId(); //生成本地消息id
+      var msg = new WebIM.message("cmd", id); //创建命令消息
+      msg.set({
+        msg: "msg",
+        to: "TDWLEQPAA20190628101258424629", //接收消息对象
+        action: "ACTIONMONITOR", //用户自定义，cmd消息必填  //用户自扩展的消息内容（群聊用法相同）
+        success: function(id, serverMsgId) {
+          console.log("发送cmd 成功");
+        } //消息发送成功回调
+      });
+
+      conn.send(msg.body);
     },
     sendImgMsg() {
       var tname = document.getElementById("toname").value;
@@ -302,15 +320,23 @@ export default {
             )
             .then(function(confr) {
               console.log("加入成功");
-              var video = document.getElementById("video");
+              var videoCreate = document.getElementById("v1");
+              var constaints = { audio: true, video: true };
               emedia.mgr
-                .publish({ audio: true, video: true }, video, "创建者加入会议")
+                .publish(constaints, videoCreate, "创建者加入会议")
                 .then(function(pushedStream) {
                   //stream 对象
                 })
                 .catch(function(error) {
                   console.log(error);
                 });
+              // emedia.mgr
+              //   .publish(constaints, ext)
+              //   .then(function(pushedStream) {
+              //     //stream 对象
+              //     //如果需要将这个stream对象 显示，需要 emedia.mgr.streamBindVideo(videoTag, pushedStream)
+              //   })
+              //   .catch(function(error) {});
             })
             .catch(function(error) {
               console.log("加入失败");
@@ -321,9 +347,9 @@ export default {
         });
     },
     pushVideo() {
-      var videoTag = document.getElementById("video");
+      var videoPush = document.getElementById("v1");
       emedia.mgr
-        .publish({ audio: true, video: true }, videoTag, "创建者加入会议")
+        .publish({ audio: true, video: true }, videoPush, "创建者加入会议")
         .then(function(pushedStream) {
           //stream 对象
         })
@@ -407,12 +433,55 @@ export default {
       if (rtn) {
         emedia.mgr.exitConference();
       }
+    },
+
+    desktopWith() {
+      /**
+       * videoConstaints {screenOptions: ['screen', 'window', 'tab']} or true
+       * withAudio： true 携带语音，false不携带
+       * videoTag 可缺失，如果有 此次publish的媒体数据将会在这个video上显示 将会与stream绑定
+       * ext 用户自定义扩展，其他成员可以看到这个字段
+       *
+       */
+      var videoConstaints = { screenOptions: ["screen", "window", "tab"] };
+      var withAudio = true;
+      var videoDesk = document.getElementById("v3");
+      var ext = "开启桌面共享";
+      emedia.mgr
+        .shareDesktopWithAudio(videoConstaints, withAudio, videoDesk, ext)
+        .then(function(pushedStream) {
+          //stream 对象
+          console.log("桌面共享成功")
+        })
+        .catch(function(error) {});
+      // emedia.mgr
+      //   .shareDesktopWithAudio()
+      //   .then(function(publishedStream) {
+      //     console.log("共享成功");
+      //   })
+      //   .catch(function(error) {
+      //     displayEvent(error);
+      //   });
     }
+
+    // csJoinConfer() {
+    //    emedia.mgr.joinConference("13H0545LENTBFFJI2U400C880", "123456", "test").then(function (confr) {
+    //         console.log("加入成功")
+
+    //     }).catch(function (error) {
+
+    //     })
+    // }
   }
 };
 </script>
 <style>
 div {
   text-align: left;
+}
+video {
+  border: 1px solid red;
+  width: 300px;
+  height: 200px;
 }
 </style>
