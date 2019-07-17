@@ -18,7 +18,7 @@ function getUrl(){
         apiUrl = (window.location.protocol === "https:" ? "https:" : "http:") + "//a1.easemob.com"
         xmppUrl = (window.location.protocol === "https:" ? "https:" : "http:") + "//im-api-v2.easemob.com/ws"
     }
-    else if(window.location.href.indexOf("") !== -1){
+    else if(window.location.href.indexOf("www.mxiang.com") !== -1){
         apiUrl = (window.location.protocol === "https:" ? "https:" : "http:") + "//a1.easemob.com"
         xmppUrl = (window.location.protocol === "https:" ? "https:" : "http:") + "//im-api-v2.easemob.com/ws"
     }
@@ -46,8 +46,8 @@ var config = {
     /*
      * Application AppKey
      */
-    appkey: "juns#warmeeting",
-    //appkey:"easemob-demo#chatdemoui",
+    
+    appkey:"easemob-demo#chatdemoui",
     /*
      * Application Host
      */
