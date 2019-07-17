@@ -11,6 +11,7 @@
       <input type="text" name="msg" id="msg">
       <br>
       <br>
+      <br>
       <button type="button" @click="loginWeb()">登陆</button>
       <button type="button" @click="logout()">退出</button>
     </div>
@@ -28,6 +29,7 @@
       <button type="button" @click="createGroup()">创建群组</button>
       <button type="button" @click="addGroupMember()">邀请用户进群</button>
       <button type="button" @click="listGroupMember()">获取群组列表</button>
+      <button type="submit" @click="sendGroupTxt()">群组文本消息</button>
       <br>image:
       <input type="file" id="gimg">
       <button type="button" @click="sendGroupImg()">群组发送图片</button>
@@ -43,16 +45,22 @@
       <button type="button" @click="rtEndCall()">结束通话</button>
     </div>
     <div>
-      <h3>多人音视频会议</h3>
+      <h3>多人音视频会议</h3>会议ID：
+      <input type="text" id="conferId">
+      <br>会议密码：
+      <input type="text" id="conferPwd">
+      <br>
       <button type="button" @click="createConfr()">创建会议</button>
       <button type="button" @click="pushVideo()">发布视频流</button>
       <button type="button" @click="inviteUser()">CMD邀请</button>
       <button type="button" @click="inviteUserText()">文本邀请</button>
+      <button type="button" @click="newinvite()">新邀请</button>
       <button type="button" @click="removeUser()">移除会议成员</button>
       <button type="button" @click="desktopWith()">桌面共享</button>
       <button type="button" @click="endConVideo()">退出会议</button>
       <br>
-      <!-- <button type="button" @click="csJoinConfer()">测试加入视频会议</button> -->
+      <h3>rest 创建会议</h3>
+      <button type="button" @click="csJoinConfer()">测试加入视频会议</button>
     </div>
     <div id="log"></div>
     <div>
@@ -68,7 +76,10 @@
 import { conn, rtcCall, memberNames } from "../router/initWeb";
 let result;
 let resultCon;
-
+WebIM.message = WebIM.default.message;
+WebIM.utils = WebIM.default.utils;
+WebIM.debug = WebIM.default.debug;
+WebIM.statusCode = WebIM.default.statusCode;
 export default {
   name: "Hello",
   methods: {
@@ -95,6 +106,9 @@ export default {
         msg: tomsg, // 消息内容
         to: toname, // 接收消息对象（用户id）
         roomType: false,
+        ext:{
+          "msg":"测试消息"
+        },
         success: function(id, serverMsgId) {
           console.log("send private text Success");
           console.log(id, serverMsgId);
@@ -107,12 +121,16 @@ export default {
       console.log(msg.body);
     },
     sendCmdMsg() {
+      var toname = document.getElementById("toname").value;
       var id = conn.getUniqueId(); //生成本地消息id
       var msg = new WebIM.message("cmd", id); //创建命令消息
       msg.set({
         msg: "msg",
-        to: "TDWLEQPAA20190628101258424629", //接收消息对象
+        to: toname, //接收消息对象
         action: "ACTIONMONITOR", //用户自定义，cmd消息必填  //用户自扩展的消息内容（群聊用法相同）
+        ext:{
+          "cmd":"测试cmd 消息"
+        },
         success: function(id, serverMsgId) {
           console.log("发送cmd 成功");
         } //消息发送成功回调
@@ -139,6 +157,9 @@ export default {
           to: tname, // 接收消息对象
           roomType: false,
           chatType: "singleChat",
+          ext:{
+            "img":"测试img 消息"
+          },
           onFileUploadError: function() {
             // 消息上传失败
             console.log("onFileUploadError");
@@ -166,7 +187,7 @@ export default {
         data: {
           groupname: "testGroup111",
           desc: "这是测试创建群组",
-          members: ["1v1v", "1z1z"],
+          // members: ["1v1v", "1z1z"],
           public: true,
           approval: true,
           allowinvites: false
@@ -201,6 +222,25 @@ export default {
         error: function(e) {}
       };
       conn.listGroupMember(options);
+    },
+    sendGroupTxt(){
+      var id = conn.getUniqueId();            // 生成本地消息id
+            var msg = new WebIM.message('txt', id); // 创建文本消息
+            var option = {
+                msg: '测试群组消息',             // 消息内容
+                to: result.data.groupid,//"86944192200705",                     // 接收消息对象(群组id)
+                roomType: false,
+                chatType: 'chatRoom',
+                success: function (message) {
+                    console.log('send room text success',message);
+                },
+                fail: function (error) {
+                    console.log('failed',error);
+                }
+            };
+            msg.set(option);
+            msg.setGroup('groupchat');
+            conn.send(msg.body);
     },
     sendGroupImg() {
       var id = conn.getUniqueId(); // 生成本地消息id
@@ -323,7 +363,7 @@ export default {
               var videoCreate = document.getElementById("v1");
               var constaints = { audio: true, video: true };
               emedia.mgr
-                .publish(constaints, videoCreate, "创建者加入会议")
+                .publish(constaints, videoCreate, "发布视频流")
                 .then(function(pushedStream) {
                   //stream 对象
                 })
@@ -397,9 +437,9 @@ export default {
           // confrId: resultCon.confrId,
           // password: resultCon.password,
           // jid: WebIM.config.appkey + "_" + tname + "@" + WebIM.config.Host
-          conferenceId: resultCon.confrId,
-          password: resultCon.password,
-          msg_extension: { inviter: uname }
+          "conferenceId": resultCon.confrId,
+          "password": resultCon.password,
+          "msg_extension": { inviter: uname }
         },
 
         success: function(id, serverMsgId) {
@@ -411,6 +451,11 @@ export default {
       });
       msg.body.chatType = "singleChat";
       conn.send(msg.body);
+    },
+    newinvite(){
+      var toname = document.getElementById("toname").value;
+      var jid = WebIM.config.appkey + '_' + toname + '@' + WebIM.config.Host
+      rtcCall.inviteConference(resultCon.confrId, resultCon.password,jid )
     },
     removeUser() {
       console.log(memberNames);
@@ -451,7 +496,7 @@ export default {
         .shareDesktopWithAudio(videoConstaints, withAudio, videoDesk, ext)
         .then(function(pushedStream) {
           //stream 对象
-          console.log("桌面共享成功")
+          console.log("桌面共享成功");
         })
         .catch(function(error) {});
       // emedia.mgr
@@ -462,16 +507,18 @@ export default {
       //   .catch(function(error) {
       //     displayEvent(error);
       //   });
+    },
+
+    csJoinConfer() {
+      var Conferid = document.getElementById("conferId").value;
+      var conferpwd = document.getElementById("conferPwd").value;
+      emedia.mgr
+        .joinConference(Conferid, conferpwd, "test")
+        .then(function(confr) {
+          console.log("加入成功");
+        })
+        .catch(function(error) {});
     }
-
-    // csJoinConfer() {
-    //    emedia.mgr.joinConference("13H0545LENTBFFJI2U400C880", "123456", "test").then(function (confr) {
-    //         console.log("加入成功")
-
-    //     }).catch(function (error) {
-
-    //     })
-    // }
   }
 };
 </script>

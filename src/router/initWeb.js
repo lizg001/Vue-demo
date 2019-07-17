@@ -1,9 +1,11 @@
-import config from '../../static/WebIMConfig'
+import config from '../../static/WebIM-v3'
+// import config from '../../static/WebIMConfig'
 
 //初始化IM SDK
 var conn = {};
 WebIM.config = config;
-conn = WebIM.conn = new WebIM.connection({
+conn = WebIM.conn = new WebIM.default.connection({
+  appKey: WebIM.config.appkey,
   isHttpDNS: WebIM.config.isHttpDNS,
   isMultiLoginSessions: WebIM.config.isMultiLoginSessions,
   https: WebIM.config.https,
@@ -22,14 +24,13 @@ conn.listen({
   onOpened: function (message) {
     //连接成功回调
     var myDate = new Date().toLocaleString();
-    conn.setPresence();
+
     console.log("%c [opened] 连接已成功建立", "color: green");
     console.log(myDate);
     alert(myDate + "登陆成功");
   },
   onClosed: function (message) {
     console.log("onclose:" + message);
-    console.log(error);
   }, //连接关闭回调
   onError: function (message) {
     console.log("onError: ", message);
@@ -37,6 +38,18 @@ conn.listen({
   }, //失败回调
   onTextMessage: function (message) {
     console.log("onTextMessage: ", message);
+    if (message.ext[0].stringValue != undefined) {
+      var truthBeTold = window.confirm((message.from + "邀请您加入会议"));
+      if (truthBeTold) {
+        emedia.mgr.joinConference(message.ext[0].stringValue, message.ext[2].stringValue, "进入会议").then(function () {
+          console.log("********加入会议成功*******")
+          // emedia.mgr.shareVideoWithAudio({
+          // });
+        }).catch(function (error) {
+          console.log("加入会议失败")
+        })
+      } 
+    }
   }, //收到文本消息
   onEmojiMessage: function (message) {
     console.log("onEmojiMessage: ", message);
@@ -47,19 +60,18 @@ conn.listen({
   }, //收到图片消息
   onCmdMessage: function (message) {
     console.log('onCmdMessage: ', message);
-    var truthBeTold = window.confirm((message.from + "邀请您加入会议"));
-    if (truthBeTold) {
-      emedia.mgr.joinConference(message.ext.conferenceId, message.ext.password, "进入会议").then(function () {
-        console.log("********加入会议成功*******")
-        // emedia.mgr.shareVideoWithAudio({
-        // });
-      }).catch(function (error) {
-
-      })
-    } else {
-
+    if (message.ext.conferenceId != undefined) {
+      var truthBeTold = window.confirm((message.from + "邀请您加入会议"));
+      if (truthBeTold) {
+        emedia.mgr.joinConference(message.ext.conferenceId, message.ext.password, "进入会议").then(function () {
+          console.log("********加入会议成功*******")
+          // emedia.mgr.shareVideoWithAudio({
+          // });
+        }).catch(function (error) {
+          console.log("加入会议失败")
+        })
+      } 
     }
-
   }, //收到命令消息
   onAudioMessage: function (message) {
     console.log("onAudioMessage: ", message);
@@ -241,12 +253,12 @@ if (WebIM.WebRTC) {
         console.log("onTermCall::");
         console.log("reason:", reason);
       },
-      onIceConnectionStateChange: function (iceState) { 
+      onIceConnectionStateChange: function (iceState) {
         console.log("onIceConnectionStateChange::", "iceState:", iceState);
       },
       onError: function (e) {
         console.log(e);
-        if(e.event.name == "NotAllowedError"){
+        if (e.event.name == "NotAllowedError") {
           alert("没有摄像头，请检查设备")
           rtcCall.endCall();
         }
@@ -269,11 +281,11 @@ emedia.mgr.onMemberJoin = function (member) {
   console.log(JSON.stringify(member.name) + "加入会议");
 };
 //有人退出会议
-emedia.mgr.onMemberExited = function(member) {
+emedia.mgr.onMemberExited = function (member) {
   console.log(JSON.stringify(member.name) + "退出会议");
 };
 //有媒体流添加；比如 自己调用了publish方法（stream.located() === true时），或其他人调用了publish方法。
-emedia.mgr.onStreamAdded = function(member, stream) {
+emedia.mgr.onStreamAdded = function (member, stream) {
   console.log("媒体流发布者" + JSON.stringify(member));
   var located = stream.located();
   if (located) {
@@ -296,11 +308,11 @@ emedia.mgr.onStreamAdded = function(member, stream) {
   // }
 };
 //有媒体流移除
-emedia.mgr.onStreamRemoved = function(member, stream) {
+emedia.mgr.onStreamRemoved = function (member, stream) {
   console.log(JSON.stringify(member.name) + "媒体流退出");
 };
 
-emedia.mgr.setUrlCreator(function(url, apiName) {
+emedia.mgr.setUrlCreator(function (url, apiName) {
   var restApi = emedia.util.parseURL("rest");
   if (!restApi) {
     restApi = "https://a1.easemob.com";
@@ -309,10 +321,10 @@ emedia.mgr.setUrlCreator(function(url, apiName) {
 });
 
 //角色改变
-emedia.mgr.onRoleChanged = function(role) {
+emedia.mgr.onRoleChanged = function (role) {
   console.log("角色改变成功");
   //会议退出；自己主动退 或 服务端主动关闭；
-  emedia.mgr.onConferenceExit = function(reason, failed) {
+  emedia.mgr.onConferenceExit = function (reason, failed) {
     reason = reason || 0;
     switch (reason) {
       case 0:
@@ -361,4 +373,4 @@ emedia.mgr.onRoleChanged = function(role) {
   };
 };
 
-export { conn, rtcCall ,memberNames};
+export { conn, rtcCall, memberNames };
